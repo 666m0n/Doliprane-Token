@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doliprane Token (DPR) - Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+        }
+
+        .action-card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+        }
+
+        .action-card h3::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-connect {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            font-size: 18px;
+            padding: 20px 40px;
+            margin-bottom: 30px;
+        }
+
+        .btn-connect:hover {
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .wallet-info {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💊 Doliprane Token</h1>
+            <div class="subtitle">Interface Web3 pour le token DPR</div>
+        </div>
+
+        <div class="content">
+            <!-- Debug Info -->
+            <div id="debugInfo" class="debug-info">
+                <strong>Debug Info:</strong><br>
+                MetaMask installé: <span id="metamaskStatus">Vérification...</span><br>
+                Réseau: <span id="networkStatus">-</span><br>
+                Ethers.js chargé: <span id="ethersStatus">Vérification...</span>
+            </div>
+
+            <div id="connectionSection">
+                <button class="btn btn-connect" onclick="connectWallet()">
+                    🦊 Connecter MetaMask
+                </button>
+            </div>
+
+            <div id="walletInfo" class="wallet-info" style="display: none;">
+                <h3>Wallet Connecté ✅</h3>
+                <div class="wallet-address" id="walletAddress"></div>
+            </div>
+
+            <div id="tokenInfo" style="display: none;">
+                <div class="status-bar">
+                    <div class="status-card">
+                        <h3>Nom du Token</h3>
+                        <div class="value" id="tokenName">-</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Symbole</h3>
+                        <div class="value" id="tokenSymbol">-</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Supply Totale</h3>
+                        <div class="value" id="totalSupply">-</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Votre Balance</h3>
+                        <div class="value" id="userBalance">-</div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <div class="action-card">
+                        <h3>Transférer des DPR</h3>
+                        <div class="input-group">
+                            <label>Adresse du destinataire :</label>
+                            <input type="text" id="transferAddress" placeholder="0x...">
+                        </div>
+                        <div class="input-group">
+                            <label>Montant (DPR) :</label>
+                            <input type="number" id="transferAmount" placeholder="100">
+                        </div>
+                        <button class="btn" onclick="transferTokens()">Envoyer</button>
+                        <div id="transferResult"></div>
+                    </div>
+
+                    <div class="action-card">
+                        <h3>Mint de nouveaux DPR</h3>
+                        <div class="input-group">
+                            <label>Adresse destinataire :</label>
+                            <input type="text" id="mintAddress" placeholder="0x...">
+                        </div>
+                        <div class="input-group">
+                            <label>Montant à créer (DPR) :</label>
+                            <input type="number" id="mintAmount" placeholder="1000">
+                        </div>
+                        <button class="btn" onclick="mintTokens()">Mint</button>
+                        <div id="mintResult"></div>
+                    </div>
+
+                    <div class="action-card">
+                        <h3>Burn des DPR</h3>
+                        <div class="input-group">
+                            <label>Montant à détruire (DPR) :</label>
+                            <input type="number" id="burnAmount" placeholder="100">
+                        </div>
+                        <button class="btn" onclick="burnTokens()">Brûler</button>
+                        <div id="burnResult"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration du contrat
+        const CONTRACT_ADDRESS = "0xB3Fe58757817Fe686cacE1CCC69729F3914a240a";
+        const CONTRACT_ABI = [
+            "function name() view returns (string)",
+            "function symbol() view returns (string)",
+            "function totalSupply() view returns (uint256)",
+            "function balanceOf(address) view returns (uint256)",
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function mint(address to, uint256 amount)",
+            "function burn(uint256 amount)",
+            "function decimals() view returns (uint8)",
+            "function owner() view returns (address)"
+        ];
+
+        // Variables globales
+        let provider;
+        let signer;
+        let contract;
+        let userAccount;
+
+        // Vérifications au chargement de la page
+        window.addEventListener('load', function() {
+            console.log('Page chargée, vérification des dépendances...');
+
+            // Vérifier Ethers.js
+            if (typeof ethers !== 'undefined') {
+                document.getElementById('ethersStatus').textContent = '✅ OK';
+                console.log('Ethers.js chargé, version:', ethers.version);
+            } else {
+                document.getElementById('ethersStatus').textContent = '❌ ERREUR';
+                console.error('Ethers.js non chargé !');
+            }
+
+            // Vérifier MetaMask
+            if (typeof window.ethereum !== 'undefined') {
+                document.getElementById('metamaskStatus').textContent = '✅ OK';
+                console.log('MetaMask détecté');
+
+                // Écouter les changements de réseau
+                window.ethereum.on('chainChanged', (chainId) => {
+                    console.log('Réseau changé:', chainId);
+                    window.location.reload();
+                });
+
+                // Écouter les changements de compte
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    console.log('Compte changé:', accounts);
+                    if (accounts.length === 0) {
+                        window.location.reload();
+                    }
+                });
+
+            } else {
+                document.getElementById('metamaskStatus').textContent = '❌ NON INSTALLÉ';
+                console.error('MetaMask non installé !');
+            }
+        });
+
+        // Connexion MetaMask
+        async function connectWallet() {
+            console.log('Tentative de connexion MetaMask...');
+
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    alert('MetaMask n\'est pas installé ! Installez-le depuis https://metamask.io/');
+                    return;
+                }
+
+                console.log('Demande d\'accès aux comptes...');
+                provider = new ethers.BrowserProvider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+
+                console.log('Récupération du signer...');
+                signer = await provider.getSigner();
+                userAccount = await signer.getAddress();
+
+                console.log('Adresse connectée:', userAccount);
+
+                // Vérifier le réseau
+                const network = await provider.getNetwork();
+                console.log('Réseau connecté:', network.name, 'ChainId:', network.chainId);
+                document.getElementById('networkStatus').textContent = `${network.name} (${network.chainId})`;
+
+                if (network.chainId !== 11155111n) {
+                    alert('⚠️ Vous n\'êtes pas sur Sepolia testnet ! Changez de réseau dans MetaMask.');
+                    return;
+                }
+
+                console.log('Création du contrat...');
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+                // Masquer la section de connexion et afficher les infos
+                document.getElementById('connectionSection').style.display = 'none';
+                document.getElementById('walletInfo').style.display = 'block';
+                document.getElementById('tokenInfo').style.display = 'block';
+                document.getElementById('walletAddress').textContent = userAccount;
+
+                console.log('Chargement des informations du token...');
+                await loadTokenInfo();
+
+            } catch (error) {
+                console.error('Erreur de connexion:', error);
+
+                if (error.code === 4001) {
+                    alert('Connexion refusée par l\'utilisateur');
+                } else if (error.code === -32002) {
+                    alert('Une demande de connexion est déjà en cours dans MetaMask');
+                } else {
+                    alert('Erreur de connexion à MetaMask: ' + error.message);
+                }
+            }
+        }
+
+        // Charger les infos du token
+        async function loadTokenInfo() {
+            try {
+                console.log('Chargement des informations du token...');
+
+                const name = await contract.name();
+                const symbol = await contract.symbol();
+                const totalSupply = await contract.totalSupply();
+                const balance = await contract.balanceOf(userAccount);
+                const decimals = await contract.decimals();
+
+                console.log('Token info:', { name, symbol, totalSupply: totalSupply.toString(), balance: balance.toString(), decimals });
+
+                document.getElementById('tokenName').textContent = name;
+                document.getElementById('tokenSymbol').textContent = symbol;
+                document.getElementById('totalSupply').textContent = ethers.formatUnits(totalSupply, decimals) + ' DPR';
+                document.getElementById('userBalance').textContent = ethers.formatUnits(balance, decimals) + ' DPR';
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des infos token:', error);
+                alert('Impossible de charger les informations du token. Vérifiez que vous êtes sur le bon réseau.');
+            }
+        }
+
+        // Transférer des tokens
+        async function transferTokens() {
+            const address = document.getElementById('transferAddress').value;
+            const amount = document.getElementById('transferAmount').value;
+            const resultDiv = document.getElementById('transferResult');
+
+            if (!address || !amount) {
+                resultDiv.innerHTML = '<div class="error">Veuillez remplir tous les champs</div>';
+                return;
+            }
+
+            try {
+                console.log('Transfert de', amount, 'DPR vers', address);
+                resultDiv.innerHTML = '<div class="success">Transaction en cours...</div>';
+
+                const decimals = await contract.decimals();
+                const tx = await contract.transfer(address, ethers.parseUnits(amount, decimals));
+
+                console.log('Transaction envoyée:', tx.hash);
+                resultDiv.innerHTML = '<div class="success">Transaction envoyée, attente de confirmation...</div>';
+
+                await tx.wait();
+                console.log('Transaction confirmée');
+
+                resultDiv.innerHTML = `<div class="success">✅ Transfert réussi !<br>Hash: ${tx.hash}</div>`;
+                await loadTokenInfo(); // Recharger les balances
+
+            } catch (error) {
+                console.error('Erreur de transfert:', error);
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        // Mint des tokens
+        async function mintTokens() {
+            const address = document.getElementById('mintAddress').value;
+            const amount = document.getElementById('mintAmount').value;
+            const resultDiv = document.getElementById('mintResult');
+
+            if (!address || !amount) {
+                resultDiv.innerHTML = '<div class="error">Veuillez remplir tous les champs</div>';
+                return;
+            }
+
+            try {
+                console.log('Mint de', amount, 'DPR pour', address);
+                resultDiv.innerHTML = '<div class="success">Transaction en cours...</div>';
+
+                const decimals = await contract.decimals();
+                const tx = await contract.mint(address, ethers.parseUnits(amount, decimals));
+
+                console.log('Transaction envoyée:', tx.hash);
+                resultDiv.innerHTML = '<div class="success">Transaction envoyée, attente de confirmation...</div>';
+
+                await tx.wait();
+                console.log('Transaction confirmée');
+
+                resultDiv.innerHTML = `<div class="success">✅ Mint réussi !<br>Hash: ${tx.hash}</div>`;
+                await loadTokenInfo(); // Recharger les balances
+
+            } catch (error) {
+                console.error('Erreur de mint:', error);
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        // Burn des tokens
+        async function burnTokens() {
+            const amount = document.getElementById('burnAmount').value;
+            const resultDiv = document.getElementById('burnResult');
+
+            if (!amount) {
+                resultDiv.innerHTML = '<div class="error">Veuillez saisir un montant</div>';
+                return;
+            }
+
+            try {
+                console.log('Burn de', amount, 'DPR');
+                resultDiv.innerHTML = '<div class="success">Transaction en cours...</div>';
+
+                const decimals = await contract.decimals();
+                const tx = await contract.burn(ethers.parseUnits(amount, decimals));
+
+                console.log('Transaction envoyée:', tx.hash);
+                resultDiv.innerHTML = '<div class="success">Transaction envoyée, attente de confirmation...</div>';
+
+                await tx.wait();
+                console.log('Transaction confirmée');
+
+                resultDiv.innerHTML = `<div class="success">✅ Burn réussi !<br>Hash: ${tx.hash}</div>`;
+                await loadTokenInfo(); // Recharger les balances
+
+            } catch (error) {
+                console.error('Erreur de burn:', error);
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-refresh des balances toutes les 30 secondes
+        setInterval(() => {
+            if (contract && userAccount) {
+                loadTokenInfo();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
